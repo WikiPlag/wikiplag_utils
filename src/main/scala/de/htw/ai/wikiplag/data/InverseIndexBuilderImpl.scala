@@ -8,6 +8,7 @@ import scala.collection.mutable
   * Created by chris on 06.11.2016.
   */
 object InverseIndexBuilderImpl {
+
   /**
     * Erzeugt eine ForwardReferenceTable nach dem Schema:
     * {
@@ -38,24 +39,25 @@ object InverseIndexBuilderImpl {
                              pageWordsAsList: List[String]): Map[String, (Int, List[Int])] = {
     pageWordsAsList.foldLeft((Map.empty[String, (Int, List[Int])], 0)) {
       (entry, x) => {
-        (entry._1.updated(x,
-          (doc_id, entry._1.getOrElse(x, (doc_id, List.empty[Int]))._2.:+(entry._2))),
-          entry._2 + 1)
+        val docList = entry._1.getOrElse(x, (doc_id, List.empty[Int]))._2
+        (entry._1.updated(x, (doc_id, docList.:+(entry._2))), entry._2 + 1)
       }
     }._1
   }
 
-  def mergeInverseIndexEntries(entries:List[Map[String, (Int, List[Int])]]): Map[String, List[(Int, List[Int])]] = {
+  def mergeInverseIndexEntries(entries: List[Map[String, (Int, List[Int])]]): Map[String, List[(Int, List[Int])]] = {
     entries.foldLeft(Map.empty[String, List[(Int, List[Int])]]) {
       (map, entryMap) => {
 
         entryMap.foldLeft(map) {
           (map, x) => {
-            val tmpDocList = map.getOrElse(x._1, List.empty[(Int, List[Int])])
-            map.updated(x._1, tmpDocList.:+(x._2))
+            val docList = map.getOrElse(x._1, List.empty[(Int, List[Int])])
+            map.updated(x._1, docList.:+(x._2))
           }
         }
       }
     }
   }
+
+
 }
