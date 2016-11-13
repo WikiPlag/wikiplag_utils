@@ -40,7 +40,7 @@ object InverseIndexBuilderImpl {
     pageWordsAsList.foldLeft((Map.empty[String, (Int, List[Int])], 0)) {
       (entry, x) => {
         val docList = entry._1.getOrElse(x, (doc_id, List.empty[Int]))._2
-        (entry._1.updated(x, (doc_id, docList.:+(entry._2))), entry._2 + 1)
+        (entry._1.updated(x, (doc_id, docList:+ entry._2)), entry._2 + 1)
       }
     }._1
   }
@@ -52,7 +52,7 @@ object InverseIndexBuilderImpl {
         entryMap.foldLeft(map) {
           (map, x) => {
             val docList = map.getOrElse(x._1, List.empty[(Int, List[Int])])
-            map.updated(x._1, docList.:+(x._2))
+            map.updated(x._1, docList:+ x._2)
           }
         }
       }
