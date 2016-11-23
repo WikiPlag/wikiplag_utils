@@ -55,5 +55,24 @@ class InverseIndexBuilderTest extends FunSuite {
     }
   }
 
+  test("testKeyBuilder") {
+    val docText = "1997 kam die Parodie die kam Parodie An Alan Smithee Film: Burn Hollywood"
+
+    new TestObject {
+      val resultList = testObject.buildIndexKeys(docText)
+      val resultSet = testObject.buildIndexKeySet(docText)
+
+      assert(resultList.size == 11)
+      assert(resultList.head.equals("diekam"))
+      assert(resultList(1).equals("Parodiedie"))
+      assert(resultList(2).equals("Parodiedie"))
+
+      assert(resultSet.size == 8)
+      assert(resultSet.head.equals("diekam"))
+      assert(resultSet.contains("Parodiedie"))
+      assert(resultSet.contains("Parodiekam"))
+
+    }
+  }
 
 }

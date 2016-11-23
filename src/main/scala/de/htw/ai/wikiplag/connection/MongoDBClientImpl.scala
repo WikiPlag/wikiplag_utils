@@ -45,7 +45,8 @@ object MongoDBClientImpl extends MongoDBClient {
       .map(x => {
         val word = x.asInstanceOf[BasicDBObject].getString("_id")
         val docList = x.asInstanceOf[BasicDBObject]
-          .getAs[List[(Long, List[Int])]]("doc_list").getOrElse(List.empty[(Long, List[Int])])
+          .getAs[List[(Long, List[Int])]]("doc_list")
+          .getOrElse(List.empty[(Long, List[Int])])
 
         /**
           * .asInstanceOf[BasicDBList].toList
@@ -57,6 +58,7 @@ object MongoDBClientImpl extends MongoDBClient {
           * )
           * )
           */
+
         (word, docList)
       })
       .toMap[String, List[(Long, List[Int])]]

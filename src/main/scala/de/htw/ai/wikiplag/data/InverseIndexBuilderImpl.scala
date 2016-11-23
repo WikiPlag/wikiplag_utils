@@ -1,7 +1,10 @@
 package de.htw.ai.wikiplag.data
 
 import de.htw.ai.wikiplag.forwardreferencetable.ForwardReferenceTable
+import de.htw.ai.wikiplag.parser.WikiDumpParser
 
+import scala.StringBuilder
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**
@@ -32,12 +35,12 @@ object InverseIndexBuilderImpl {
     * }
     *
     * @param doc_id          Die Page-ID.
-    * @param pageWordsAsList Eine Liste, deren Elemente die Woerter der Page enthalten.
+    * @param tokens Eine Liste, deren Elemente die Woerter der Page enthalten.
     * @return Eine Forward Reference Table.
     */
   def buildInverseIndexEntry(doc_id: Int,
-                             pageWordsAsList: List[String]): Map[String, (Int, List[Int])] = {
-    pageWordsAsList.foldLeft((Map.empty[String, (Int, List[Int])], 0)) {
+                             tokens: List[String]): Map[String, (Int, List[Int])] = {
+    tokens.foldLeft((Map.empty[String, (Int, List[Int])], 0)) {
       (entry, x) => {
         val docList = entry._1.getOrElse(x, (doc_id, List.empty[Int]))._2
         (entry._1.updated(x, (doc_id, docList:+ entry._2)), entry._2 + 1)
@@ -59,5 +62,26 @@ object InverseIndexBuilderImpl {
     }
   }
 
+  def buildIndexKeySet(documentText : String) : Set[String] = {
+    buildIndexKeys(documentText).toSet
+  }
+
+  def buildIndexKeys(documentText : String): List[String] ={
+    val tokens = WikiDumpParser.extractPlainText(documentText)
+    build2TokenKeys(tokens, List.empty[String])
+  }
+
+  @tailrec
+  private def build2TokenKeys(uniqueTokens : List[String], agg : List[String]) : List[String]= {
+    val head = uniqueTokens.head
+    val tail = uniqueTokens.tail
+
+    if (tail == null || tail == List.empty[String])
+      return agg
+
+    val strings = List(head, tail.head).sortWith((e1, e2) => (e1 compareTo e2) < 0)
+
+    build2TokenKeys(uniqueTokens.tail, agg :+ (strings.mkString) )
+  }
 
 }
