@@ -67,8 +67,8 @@ class InverseIndexBuilderTest extends FunSuite {
       assert(resultList(1).equals("Parodiedie"))
       assert(resultList(2).equals("Parodiedie"))
 
-      assert(resultSet.size == 8)
-      assert(resultSet.head.equals("diekam"))
+      assert(resultSet.size == 9)
+      assert(resultSet.contains("diekam"))
       assert(resultSet.contains("Parodiedie"))
       assert(resultSet.contains("Parodiekam"))
 
