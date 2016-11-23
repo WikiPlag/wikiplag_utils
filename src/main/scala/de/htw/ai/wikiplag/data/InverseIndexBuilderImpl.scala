@@ -81,7 +81,7 @@ object InverseIndexBuilderImpl {
 
     val strings = List(head, tail.head).sortWith((e1, e2) => (e1 compareTo e2) < 0)
 
-    build2TokenKeys(uniqueTokens.tail, agg :+ (strings.mkString) )
+    build2TokenKeys(uniqueTokens.tail, agg :+ strings.mkString )
   }
 
 }
