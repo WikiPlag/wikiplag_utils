@@ -1,7 +1,7 @@
 name := "wikiplag_utils"
 
 version := "1.0"
-scalaVersion := "2.11.0"
+scalaVersion := "2.10.4"
 
 /*
  * Dependencies
@@ -14,11 +14,9 @@ val testDependencies = Seq(
 val unbescaped = "org.unbescape" % "unbescape" % "1.1.3.RELEASE"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.9"
 val mongoDBDriverDep = "org.mongodb" %% "casbah" % "3.1.1"
-val xmlDeps = "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
 
 libraryDependencies ++= testDependencies
 libraryDependencies ++= Seq(
   unbescaped,
   commonsCodec,
-  mongoDBDriverDep,
-  xmlDeps)
+  mongoDBDriverDep)
