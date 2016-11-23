@@ -1,7 +1,6 @@
 package de.htw.ai.wikiplag.connection
 
 import com.mongodb.casbah.Imports._
-import de.htw.ai.wikiplag.connection.MongoDBImpl
 
 /**
   * Created by Max on 23.05.2016.
