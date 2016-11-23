@@ -519,4 +519,5 @@ object WikiDumpParser extends Parser {
     frontendParsedPages.map((extractWikiDisplayText(_))).foreach(println(_))
 
   }
+
 }
