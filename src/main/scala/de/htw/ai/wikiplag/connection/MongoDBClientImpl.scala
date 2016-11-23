@@ -34,7 +34,7 @@ object MongoDBClientImpl extends MongoDBClient {
   }
 
   override def getInvIndex(word: String): List[(Long, List[Int])] = {
-    val entry = inverseIndexCollection.findOneByID(MongoDBObject("-id" -> word)).get
+    val entry = inverseIndexCollection.findOneByID(MongoDBObject("_id" -> word)).get
 
     entry.asInstanceOf[BasicDBObject].getAs[List[(Long, List[Int])]]("doc_list").get
   }
@@ -44,7 +44,9 @@ object MongoDBClientImpl extends MongoDBClient {
       .toList
       .map(x => {
         val word = x.asInstanceOf[BasicDBObject].getString("_id")
-        val docList = x.asInstanceOf[BasicDBObject].getAs[List[(Long, List[Int])]]("doc_list")
+        val docList = x.asInstanceOf[BasicDBObject]
+          .getAs[List[(Long, List[Int])]]("doc_list").getOrElse(List.empty[(Long, List[Int])])
+
         /**
           * .asInstanceOf[BasicDBList].toList
           * .map(viewIndexElement => (
@@ -60,7 +62,26 @@ object MongoDBClientImpl extends MongoDBClient {
       .toMap[String, List[(Long, List[Int])]]
   }
 
-  override def getDocument(doc_id: Long): Document = ???
+  private val parseDocument = new Function[BasicDBObject, Document]{
+    def apply(x : BasicDBObject) : Document = {
+      new Document(lId = x.getLong("_id", Long.MinValue),
+        sText = x.getString("text", ""),
+        sTitle = x.getString("title", ""),
+        viewInd = x.getAsOrElse[List[(Int, Int, Int)]]("view_index", List.empty[(Int, Int, Int)]))
+    }
+  }
 
-  override def getDocuments(list: List[Long]): List[Document] = ???
+  override def getDocument(doc_id: Long): Document = {
+    val documentEntry = documentsCollection.findOneByID(MongoDBObject("_id" -> doc_id)).get
+
+    val monogoDbObject = documentEntry.asInstanceOf[BasicDBObject]
+
+    parseDocument(monogoDbObject)
+  }
+
+  override def getDocuments(list: Set[Long]): List[Document] = {
+    documentsCollection.find("_id" $in list).toList
+        .map(x => x.asInstanceOf[BasicDBObject])
+        .map(parseDocument)
+  }
 }

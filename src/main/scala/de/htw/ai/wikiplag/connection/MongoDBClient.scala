@@ -30,11 +30,13 @@ trait MongoDBClient {
     */
   def close()
 
-  def getInvIndex(word:String): Map[String, List[(Long,List[Int])]]
-  def getInvIndex(words:Set[String]): Map[String, List[(Long,List[Int])]]
+  def getInvIndex(word: String): List[(Long, List[Int])]
 
-  def getDocument(doc_id:Long) : Document
-  def getDocuments(list: List[Long]) : List[Document]
+  def getInvIndex(words: Set[String]): Map[String, List[(Long, List[Int])]]
+
+  def getDocument(doc_id: Long): Document
+
+  def getDocuments(list: Set[Long]): List[Document]
 
 
 }
