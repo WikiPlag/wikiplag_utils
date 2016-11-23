@@ -15,8 +15,14 @@ val unbescaped = "org.unbescape" % "unbescape" % "1.1.3.RELEASE"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.9"
 val mongoDBDriverDep = "org.mongodb" %% "casbah" % "3.1.1"
 
+val sparkCoreDep = "org.apache.spark" %% "spark-core" % "1.3.0" % "provided"
+val sparkSQLDep = "org.apache.spark" %% "spark-sql" % "1.3.0" % "provided"
+
 libraryDependencies ++= testDependencies
 libraryDependencies ++= Seq(
   unbescaped,
   commonsCodec,
-  mongoDBDriverDep)
+  mongoDBDriverDep,
+  sparkCoreDep,
+  sparkSQLDep
+)
