@@ -73,6 +73,10 @@ object InverseIndexBuilderImpl {
 
   @tailrec
   private def build2TokenKeys(uniqueTokens : List[String], agg : List[String]) : List[String]= {
+    if (uniqueTokens.isEmpty) {
+      return agg
+    }
+
     val head = uniqueTokens.head
     val tail = uniqueTokens.tail
 
