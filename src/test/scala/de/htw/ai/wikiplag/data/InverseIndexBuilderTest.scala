@@ -17,6 +17,17 @@ class InverseIndexBuilderTest extends FunSuite {
     val testObject = InverseIndexBuilderImpl
   }
 
+  test("testEmptyList") {
+
+
+    new TestObject {
+      val map_e1 = testObject.buildIndexKeys("")
+
+      assert(map_e1.isEmpty)
+
+    }
+  }
+
   test("testBuildInverseIndexEntry(doc_id, pageWordsAsList)") {
 
     val doc_id = 13
