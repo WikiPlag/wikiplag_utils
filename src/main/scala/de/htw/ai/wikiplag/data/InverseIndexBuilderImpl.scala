@@ -68,8 +68,11 @@ object InverseIndexBuilderImpl {
 
   def buildIndexKeys(documentText : String): List[String] ={
     val tokens = WikiDumpParser.extractPlainText(documentText)
-    build2TokenKeys(tokens, List.empty[String])
+    build2TokenKeysIdentity(tokens)
   }
+
+  private def build2TokenKeysIdentity(uniqueTokens: List[String]): List[String] =
+    uniqueTokens // here we can filter so called stop words
 
   @tailrec
   private def build2TokenKeys(uniqueTokens : List[String], agg : List[String]) : List[String]= {
