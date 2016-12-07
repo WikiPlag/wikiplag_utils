@@ -38,9 +38,9 @@ object InverseIndexBuilderImpl {
     * @param tokens Eine Liste, deren Elemente die Woerter der Page enthalten.
     * @return Eine Forward Reference Table.
     */
-  def buildInverseIndexEntry(doc_id: Int,
-                             tokens: List[String]): Map[String, (Int, List[Int])] = {
-    tokens.foldLeft((Map.empty[String, (Int, List[Int])], 0)) {
+  def buildInverseIndexEntry(doc_id: Long,
+                             tokens: List[String]): Map[String, (Long, List[Int])] = {
+    tokens.foldLeft((Map.empty[String, (Long, List[Int])], 0)) {
       (entry, x) => {
         val docList = entry._1.getOrElse(x, (doc_id, List.empty[Int]))._2
         (entry._1.updated(x, (doc_id, docList:+ entry._2)), entry._2 + 1)
@@ -48,13 +48,13 @@ object InverseIndexBuilderImpl {
     }._1
   }
 
-  def mergeInverseIndexEntries(entries: List[Map[String, (Int, List[Int])]]): Map[String, List[(Int, List[Int])]] = {
-    entries.foldLeft(Map.empty[String, List[(Int, List[Int])]]) {
+  def mergeInverseIndexEntries(entries: List[Map[String, (Long, List[Int])]]): Map[String, List[(Long, List[Int])]] = {
+    entries.foldLeft(Map.empty[String, List[(Long, List[Int])]]) {
       (map, entryMap) => {
 
         entryMap.foldLeft(map) {
           (map, x) => {
-            val docList = map.getOrElse(x._1, List.empty[(Int, List[Int])])
+            val docList = map.getOrElse(x._1, List.empty[(Long, List[Int])])
             map.updated(x._1, docList:+ x._2)
           }
         }
