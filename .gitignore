@@ -9,7 +9,6 @@ project/project
 *.project
 
 mongo.properties
-
 # #ignore everything expected...->
 # *
 # !*.scala
