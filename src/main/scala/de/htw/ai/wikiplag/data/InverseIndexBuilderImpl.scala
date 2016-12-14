@@ -91,6 +91,9 @@ object InverseIndexBuilderImpl {
   }
 
   def normalize(rawWords: List[String]): List[String] = {
+    if(stopWords == null) {
+      loadStopWords()
+    }
     rawWords.filter(x => !stopWords.contains(x))
   }
 
