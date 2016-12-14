@@ -12,9 +12,9 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class InverseIndexBuilderTest extends FunSuite {
 
-
   trait TestObject {
     val testObject = InverseIndexBuilderImpl
+    testObject.loadStopWords()
   }
 
   test("testEmptyList") {

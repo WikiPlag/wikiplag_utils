@@ -66,10 +66,10 @@ object MongoDBClientImpl extends MongoDBClient {
 
   private val parseDocument = new Function[BasicDBObject, Document]{
     def apply(x : BasicDBObject) : Document = {
-      new Document(lId = x.getLong("_id", Long.MinValue),
-        sText = x.getString("text", ""),
-        sTitle = x.getString("title", ""),
-        viewInd = x.getAsOrElse[List[(Int, Int, Int)]]("view_index", List.empty[(Int, Int, Int)]))
+      new Document(id = x.getLong("_id", Long.MinValue),
+        text = x.getString("text", ""),
+        title = x.getString("title", ""),
+        viewIndex = x.getAsOrElse[List[(Int, Int, Int)]]("view_index", List.empty[(Int, Int, Int)]))
     }
   }
 
