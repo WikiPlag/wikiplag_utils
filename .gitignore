@@ -8,6 +8,8 @@ project/project
 *.properties
 *.project
 
+mongo.properties
+
 # #ignore everything expected...->
 # *
 # !*.scala
