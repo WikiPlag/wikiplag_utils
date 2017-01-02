@@ -66,7 +66,7 @@ class MongoDbClient(sc: SparkContext,
       .foldLeft[RDD[(String, List[(Long, List[Int])])]](emptyRDD) {
       (rdd, x) => {
         val tmpRDD = sc.parallelize(Array(x))
-        rdd.intersection(tmpRDD)
+        rdd.union(tmpRDD)
       }
     }
   }
