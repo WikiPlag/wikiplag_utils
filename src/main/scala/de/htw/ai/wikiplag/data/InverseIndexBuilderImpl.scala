@@ -74,7 +74,7 @@ object InverseIndexBuilderImpl {
 
   def buildIndexKeys(documentText: String): List[String] = {
     val tokens = WikiDumpParser.extractPlainText(documentText)
-    normalize(tokens)
+    val normalizedTokens = normalize(tokens)
 
     /**
       * - filter stop words
@@ -87,7 +87,7 @@ object InverseIndexBuilderImpl {
       * For more information on how to build an inverse index, look up the elastic search doc.
       * see: https://www.elastic.co/guide/en/elasticsearch/guide/current/inverted-index.html
       */
-    buildSingleTokenKeys(tokens)
+    buildSingleTokenKeys(normalizedTokens)
   }
 
   def normalize(rawWords: List[String]): List[String] = {

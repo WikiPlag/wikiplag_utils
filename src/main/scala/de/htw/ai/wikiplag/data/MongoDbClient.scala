@@ -5,8 +5,6 @@ import de.htw.ai.wikiplag.model.Document
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.collection.immutable
-
 /**
   * Created by chris on 23.11.2016.
   */
@@ -27,13 +25,16 @@ class MongoDbClient(sc: SparkContext,
     entry.asInstanceOf[BasicDBObject].getAs[List[(Long, List[Int])]]("doc_list").get
   }
 
-  private def parse2InvIndexEntry = (x: DBObject) => {
+  private def parse2InvIndexEntry(x: DBObject): (String, List[(Long, List[Int])]) = {
     val word = x.asInstanceOf[BasicDBObject].getString("_id")
-    val docList = x.asInstanceOf[BasicDBObject]
-      .getAs[List[(Long, List[Int])]]("doc_list")
-      .getOrElse(List.empty[(Long, List[Int])])
-
-    (word, docList)
+    val docList = x.asInstanceOf[BasicDBObject].get("doc_list").asInstanceOf[BasicDBList]
+    val scalaTypeList = docList.map(z => {
+      val entry = z.asInstanceOf[BasicDBList]
+      val id = entry.get(0).asInstanceOf[Long]
+      val l = entry.get(1).asInstanceOf[BasicDBList].map(x => x.asInstanceOf[Int]).toList
+      (id, l)
+    }).toList
+    (word, scalaTypeList)
   }
 
   private def parseFromInverseIndexEntry = (token: String, documents: List[(Long, List[Int])]) => {
