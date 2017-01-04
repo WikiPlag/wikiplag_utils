@@ -16,10 +16,15 @@ val unbescaped = "org.unbescape" % "unbescape" % "1.1.3.RELEASE"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.9"
 val mongoDBDriverDep = "org.mongodb" %% "casbah" % "3.1.1" // + core, query and commons ?!
 
-val sparkCoreDep = "org.apache.spark" %% "spark-core" % "1.3.0" % "provided"
-val sparkSQLDep = "org.apache.spark" %% "spark-sql" % "1.3.0" % "provided"
+val sparkCoreDep = "org.apache.spark" %% "spark-core" % "1.5.0" % "provided"
+val sparkSQLDep = "org.apache.spark" %% "spark-sql" % "1.5.0" % "provided"
 
-val stratioSparkDep = "com.stratio.datasource" %% "spark-mongodb" % "0.12.0" exclude("org.scala-lang", "scala-compiler")
+//val stratioSparkDep = "com.stratio.datasource" %% "spark-mongodb" % "0.12.0" exclude("org.scala-lang", "scala-compiler")
+
+val mongoDBHadoopCore = ("org.mongodb.mongo-hadoop" % "mongo-hadoop-core" % "1.5.1")
+//  .exclude("commons-logging", "commons-logging")
+//  .exclude("commons-beanutils", "commons-beanutils-core")
+//  .exclude("commons-collections", "commons-collections")
 
 
 libraryDependencies ++= testDependencies
@@ -29,5 +34,6 @@ libraryDependencies ++= Seq(
   mongoDBDriverDep,
   sparkCoreDep,
   sparkSQLDep,
-  stratioSparkDep
+//  stratioSparkDep,
+  mongoDBHadoopCore
 )

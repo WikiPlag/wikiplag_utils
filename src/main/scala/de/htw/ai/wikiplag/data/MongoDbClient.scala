@@ -1,16 +1,23 @@
 package de.htw.ai.wikiplag.data
 
+import com.mongodb.ServerAddress
 import com.mongodb.casbah.Imports._
+import com.mongodb.casbah.MongoCredential
 import de.htw.ai.wikiplag.model.Document
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.bson.BSONObject
 
 import scala.collection.immutable
+import scala.reflect.io.File
 
 /**
   * Created by chris on 23.11.2016.
   */
 class MongoDbClient(sc: SparkContext,
+                    InverseIndexHadoopConfig: Configuration,
+                    DocumentsHadoopConfig: Configuration,
                     createInverseIndexFct: () => MongoCollection,
                     createDocumentCollectionFct: () => MongoCollection) extends Serializable {
 
@@ -66,7 +73,7 @@ class MongoDbClient(sc: SparkContext,
       .foldLeft[RDD[(String, List[(Long, List[Int])])]](emptyRDD) {
       (rdd, x) => {
         val tmpRDD = sc.parallelize(Array(x))
-        rdd.intersection(tmpRDD)
+        rdd.union(tmpRDD)
       }
     }
   }
@@ -92,13 +99,6 @@ class MongoDbClient(sc: SparkContext,
   //
   //  }
 
-  private def parse2Document = (x: BasicDBObject) => {
-    new Document(id = x.getLong("_id", Long.MinValue),
-      text = x.getString("text", ""),
-      title = x.getString("title", ""),
-      viewIndex = x.getAsOrElse[List[(Int, Int, Int)]]("viewindex", List.empty[(Int, Int, Int)]))
-  }
-
   private def parseFromDocument = (d: Document) => {
     MongoDBObject(
       ("_id", d.id),
@@ -114,29 +114,45 @@ class MongoDbClient(sc: SparkContext,
 
     val monogoDbObject = documentEntry.asInstanceOf[BasicDBObject]
 
-    parse2Document(monogoDbObject)
+    MongoDbClient.parse2Document(monogoDbObject)
   }
 
   def getDocuments(list: Set[Long]): List[Document] = {
     documentsCollection.find("_id" $in list).toList
       .map(x => x.asInstanceOf[BasicDBObject])
-      .map(parse2Document)
+      .map(MongoDbClient.parse2Document)
+  }
+
+  def getAllDocumentsRDD: RDD[Document] = {
+    //    val sb:StringBuilder = new StringBuilder().append('[')
+    //    list.foreach(x => sb.append(x).append(','))
+    //    // replace last ',' with ']'
+    //    sb.replace(sb.size - 1, sb.size, "]")
+    //
+    //    DocumentsHadoopConfig.set("input.mongo.query", "{_id:{ $in :" + sb.toString + "}")
+
+    val documents = sc.newAPIHadoopRDD(DocumentsHadoopConfig, classOf[com.mongodb.hadoop.MongoInputFormat], classOf[Object], classOf[BSONObject])
+
+    documents
+      .map(_._2.asInstanceOf[BasicDBObject])
+      .map(x => MongoDbClient.parse2Document(x))
+//      .filter(x => list.contains(x.id))
   }
 
   def getDocumentsRDD(list: Set[Long]): RDD[Document] = {
-    val dataIterator = documentsCollection.find("_id" $in list).toIndexedSeq
+        val dataIterator = documentsCollection.find("_id" $in list).toIndexedSeq
 
-    val emptyRDD = sc.emptyRDD[Document]
+        val emptyRDD = sc.emptyRDD[Document]
 
-    dataIterator
-      .map(x => x.asInstanceOf[BasicDBObject])
-      .map(parse2Document)
-      .foldLeft[RDD[Document]](emptyRDD) {
-      (rdd, x) => {
-        val tmpRDD = sc.parallelize(Array(x))
-        rdd.intersection(tmpRDD)
-      }
-    }
+        dataIterator
+          .map(x => x.asInstanceOf[BasicDBObject])
+          .map(MongoDbClient.parse2Document)
+          .foldLeft[RDD[Document]](emptyRDD) {
+          (rdd, x) => {
+            val tmpRDD = sc.parallelize(Array(x))
+            rdd.union(tmpRDD)
+          }
+        }
   }
 
   def insertDocument(document: Document): Unit = {
@@ -158,6 +174,12 @@ object MongoDbClient {
   protected var serverAddress: ServerAddress = _
   protected var credentials: List[MongoCredential] = _
 
+  private def parse2Document = (x: BasicDBObject) => {
+    new Document(id = x.getLong("_id", Long.MinValue),
+      text = x.getString("text", ""),
+      title = x.getString("title", ""),
+      viewIndex = x.getAsOrElse[List[(Int, Int, Int)]]("viewindex", List.empty[(Int, Int, Int)]))
+  }
 
   def open(): MongoClient = {
     //    val serverAddress: ServerAddress = new ServerAddress(ServerAddress, SERVER_PORT)
@@ -166,9 +188,26 @@ object MongoDbClient {
     MongoClient(serverAddress, credentials)
   }
 
-  def apply(sc: SparkContext, mongoAddress: ServerAddress, mongoCredentials: List[MongoCredential]): MongoDbClient = {
-    serverAddress = mongoAddress
-    credentials = mongoCredentials
+  def apply(sc: SparkContext, host: String, port: Integer, dbName: String, user: String, password: String): MongoDbClient = {
+    serverAddress = new ServerAddress(host, port)
+    credentials = List(MongoCredential.createCredential(user, dbName, password.toCharArray))
+
+    val uriBuilder = new StringBuilder("mongodb://").append(new String(host)).append(":").append(String.valueOf(port))
+      .append("/").append(dbName).append('.')
+    val authUriBuilder = new StringBuilder("mongodb://").append(user).append(":")
+      .append(password).append("@").append(host).append(":").append(port).append('/')
+      .append(dbName)
+    val inputUriDocuments = uriBuilder.toString() + COLLECTION_DOCUMENTS
+    val inputUriInvIndex = uriBuilder.toString() + COLLECTION_INVERSE_INDEX
+    val authUri = authUriBuilder.toString()
+
+    val documentsConfig = new Configuration()
+    documentsConfig.set("mongo.input.uri", inputUriDocuments)
+    documentsConfig.set("mongo.auth.uri", authUri)
+    val invIndexConfig = new Configuration()
+    invIndexConfig.set("mongo.input.uri", inputUriInvIndex)
+    invIndexConfig.set("mongo.auth.uri", authUri)
+
 
     val createInverseIndexFct = () => {
       val mongoClient = MongoClient(serverAddress, credentials)
@@ -190,6 +229,6 @@ object MongoDbClient {
       mongoClient(WIKI_DATABASE)(COLLECTION_DOCUMENTS)
     }
 
-    new MongoDbClient(sc, createInverseIndexFct, createDocumentCollectionFct)
+    new MongoDbClient(sc, invIndexConfig, documentsConfig, createInverseIndexFct, createDocumentCollectionFct)
   }
 }

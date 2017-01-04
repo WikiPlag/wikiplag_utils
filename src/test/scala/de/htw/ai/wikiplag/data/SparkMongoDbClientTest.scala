@@ -1,8 +1,13 @@
 package de.htw.ai.wikiplag.data
 
 
+import java.io.FileInputStream
+import java.util.Properties
+
 import com.mongodb.ServerAddress
 import com.mongodb.casbah.MongoCredential
+import com.mongodb.casbah.Imports._
+import org.apache.commons.cli.GnuParser
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSuite}
@@ -15,25 +20,40 @@ class SparkMongoDbClientTest extends FunSuite with BeforeAndAfterAll {
   var conf:org.apache.spark.SparkConf=_
   var sc:SparkContext=_
 
-  val SERVER_PORT = 27020
-  val ServerAddress = "hadoop03.f4.htw-berlin.de"
-  val Password = "Ku7WhY34"
-  val Database = "wikiplag"
-  val Username = "wikiplag"
-
 
   override protected def beforeAll() {
+
+    val (host, port, dbName, user, password) =
+      try {
+        val prop = new Properties()
+        prop.load(new FileInputStream("mongo.properties"))
+
+        (
+          prop.getProperty("mongo.host"),
+          new Integer(prop.getProperty("mongo.port")),
+          prop.getProperty("mongo.db"),
+          prop.getProperty("mongo.user"),
+          prop.getProperty("mongo.password")
+          )
+      } catch { case e: Exception =>
+        e.printStackTrace()
+        sys.exit(1)
+      }
 
     conf = new SparkConf().setMaster("local[4]").setAppName("MongoDbClientTest")
     conf.set("spark.executor.memory", "4g")
     conf.set("spark.storage.memoryFraction", "0.8")
     conf.set("spark.driver.memory", "2g")
 
+//    val uri = "mongodb://" + host + ":" + port + "/wikiplag.documents"
+//    val authUri = "mongodb://" + user + ":" + password + "@" + host + ":" + port + "/wikiplag"
+//
+//    conf.set("mongo.input.uri", uri)
+//    conf.set("mongo.auth.uri", authUri)
+
     sc = new SparkContext(conf)
 
-    mongoDbClient = MongoDbClient(sc,
-      new ServerAddress(ServerAddress, SERVER_PORT),
-      List(MongoCredential.createCredential(Username, Database, Password.toCharArray)))
+    mongoDbClient = MongoDbClient(sc, host, port, user, dbName, password)
 
     //    entityResolution = new EntityResolution(sc, dat1, dat2, stopwordsFile, goldStandardFile)
     //amazon_small= Utils.getData(dat1, sc).cache
@@ -53,15 +73,37 @@ class SparkMongoDbClientTest extends FunSuite with BeforeAndAfterAll {
     val testDocumentsRDD = mongoDbClient.getDocumentsRDD(ids)
 
     assert (testDocumentsRDD != null)
-    assert(testDocumentsRDD.count() == ids.size)
+//    assert(testDocumentsRDD.count() == ids.size)
 
     val testDocuments = testDocumentsRDD.collect().toList
 
     assert (testDocuments.size == ids.size)
+
+    val testDoc = testDocuments.find(x => x.id == 187902).get
+    assert (testDoc.title.equals("Bechuanaland"))
+
+
   }
 
   test("testGetInvIndexRDD") {
+    val tokens= Set[String]("Rausch", "Schokoladen", "Wilhelm", "Rausch", "Sohn","Konditormeisters","Chocolatiers","eröffnete","Berlin","Rausch","Privat","Confiserie","Herstellung","Pralinen","Schokoladen","Honigkuchen")
 
+    val testEntriesRDD = mongoDbClient.getInvIndexRDD(tokens)
+
+    assert (testEntriesRDD != null)
+
+    val inverseIndex = testEntriesRDD.collect().toMap
+
+    assert (inverseIndex.size == tokens.size)
+
+    val testEntry = inverseIndex.get("Rausch").get
+
+    // find a valid document
+    assert(testEntry.exists(x => x._1.equals(5712984L)))
   }
 
+  override protected def afterAll() {
+    if (sc!=null) {sc.stop; println("Spark stopped......")}
+    else println("Cannot stop spark - reference lost!!!!")
+  }
 }

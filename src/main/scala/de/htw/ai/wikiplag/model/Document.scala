@@ -8,7 +8,7 @@ import com.mongodb.DBObject
 class Document(val id: Long = Long.MinValue,
                val title: String = "",
                val text: String = "",
-               val viewIndex:List[(Int,Int,Int)] = List.empty[(Int,Int,Int)]) {
+               val viewIndex:List[(Int,Int,Int)] = List.empty[(Int,Int,Int)]) extends Serializable {
 
 //  val id: Long = lId
 //  val title: String = sTitle

@@ -1,5 +1,8 @@
 package de.htw.ai.wikiplag.data
 
+import java.io.FileInputStream
+import java.util.Properties
+
 import com.mongodb.ServerAddress
 import com.mongodb.casbah.MongoCredential
 import org.junit.runner.RunWith
@@ -14,13 +17,28 @@ class MongoDbClientTest extends FunSuite {
 
   val SERVER_PORT = 27020
   val ServerAddress = "hadoop03.f4.htw-berlin.de"
-  val Password = "Ku7WhY34"
-  val Database = "wikiplag"
-  val Username = "wikiplag"
+//  val Password = "Ku7WhY34"
+//  val Database = "wikiplag"
+//  val Username = "wikiplag"
 
-  val mongoDbClient = MongoDbClient(null,
-    new ServerAddress(ServerAddress, SERVER_PORT),
-    List(MongoCredential.createCredential(Username, Database, Password.toCharArray)))
+  val (host, port, database, username, password) =
+    try {
+      val prop = new Properties()
+      prop.load(new FileInputStream("mongo.properties"))
+
+      (
+        prop.getProperty("mongo.host"),
+        new Integer(prop.getProperty("mongo.port")),
+        prop.getProperty("mongo.db"),
+        prop.getProperty("mongo.user"),
+        prop.getProperty("mongo.password")
+        )
+    } catch { case e: Exception =>
+      e.printStackTrace()
+      sys.exit(1)
+    }
+
+  val mongoDbClient = MongoDbClient(null, ServerAddress, SERVER_PORT, database, username, password)
 
   test("testGetInvIndex_singleEntry") {
     val data = mongoDbClient.getInvIndex("denNamen")
