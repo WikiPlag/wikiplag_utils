@@ -1,8 +1,7 @@
 package de.htw.ai.wikiplag.data
 
-import de.htw.ai.wikiplag.forwardreferencetable.ForwardReferenceTableImp
-import org.scalatest.FunSuite
 import org.junit.runner.RunWith
+import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 
 
@@ -25,6 +24,15 @@ class InverseIndexBuilderTest extends FunSuite {
 
       assert(map_e1.isEmpty)
 
+    }
+  }
+
+  test("stopword removal") {
+    val input = List("abc", "def", "ist", "einen", "ghi")
+    val expected = List("abc", "def", "ghi")
+    new TestObject {
+      val out = testObject.normalize(input)
+      assert(out == expected)
     }
   }
 
@@ -73,7 +81,7 @@ class InverseIndexBuilderTest extends FunSuite {
       val resultList = testObject.buildIndexKeys(docText)
       val resultSet = testObject.buildIndexKeySet(docText)
 
-      assert(resultList.size == 11)
+      assert(resultList.size == 10)
       assert(resultList.head.equals("diekam"))
       assert(resultList(1).equals("Parodiedie"))
       assert(resultList(2).equals("Parodiedie"))
