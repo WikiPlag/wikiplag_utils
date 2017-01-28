@@ -2,7 +2,6 @@ package de.htw.ai.wikiplag.data
 
 import java.io.InputStream
 import java.util.Locale
-
 import de.htw.ai.wikiplag.parser.WikiDumpParser
 
 import scala.annotation.tailrec
@@ -14,7 +13,7 @@ object InverseIndexBuilderImpl {
 
   var stopWords: Set[String] = _
 
-  def loadStopWords(stopWordsFile: String = "/stopwords_top50_de.txt") = {
+  def loadStopWords(stopWordsFile: String = "/stopwords_de.txt") = {
     stopWords = Option(getClass.getResourceAsStream(stopWordsFile))
       .map(scala.io.Source.fromInputStream)
       .map(_.getLines.toSet)
@@ -94,9 +93,7 @@ object InverseIndexBuilderImpl {
   def normalize(rawWords: List[String]): List[String] = {
     var reducedWords = rawWords.map(x => x.toLowerCase(Locale.ROOT))
 
-    if(stopWords == null) {
-      loadStopWords()
-    }
+    if (stopWords == null) loadStopWords()
 
     reducedWords = reducedWords.filter(x => !stopWords.contains(x))
 
