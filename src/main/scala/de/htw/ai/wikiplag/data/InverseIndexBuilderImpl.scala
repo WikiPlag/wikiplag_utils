@@ -1,6 +1,7 @@
 package de.htw.ai.wikiplag.data
 
 import java.io.InputStream
+import java.util.Locale
 
 import de.htw.ai.wikiplag.parser.WikiDumpParser
 
@@ -91,10 +92,15 @@ object InverseIndexBuilderImpl {
   }
 
   def normalize(rawWords: List[String]): List[String] = {
+    var reducedWords = rawWords.map(x => x.toLowerCase(Locale.ROOT))
+
     if(stopWords == null) {
       loadStopWords()
     }
-    rawWords.filter(x => !stopWords.contains(x))
+
+    reducedWords = reducedWords.filter(x => !stopWords.contains(x))
+
+    reducedWords
   }
 
   private def buildSingleTokenKeys(uniqueTokens: List[String]): List[String] = uniqueTokens
