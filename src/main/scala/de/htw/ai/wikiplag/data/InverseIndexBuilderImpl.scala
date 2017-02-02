@@ -13,6 +13,11 @@ object InverseIndexBuilderImpl {
 
   var stopWords: Set[String] = _
 
+  /**
+    * Reads stop words from a file and stores them in the {@link InverseIndexBuilderImpl#stopWords} variable.
+    *
+    * @param stopWordsFile the file name.
+    */
   def loadStopWords(stopWordsFile: String = "/stopwords_de.txt") = {
     stopWords = Option(getClass.getResourceAsStream(stopWordsFile))
       .map(scala.io.Source.fromInputStream)
@@ -21,30 +26,38 @@ object InverseIndexBuilderImpl {
   }
 
   /**
-    * Erzeugt eine ForwardReferenceTable nach dem Schema:
-    * {
-    * "hash("ngram_1")":  List[ ( page_id, List[ ngram_position_1, ngram_position_2, ngram_position_3 ] ) ],
-    * "hash("ngram_2")":  List[ ( page_id, List[ ngram_position_1, ... ] ) ], ...
+    * Builds the inverse index for a certain document. There will be no normalization or stemming applied. You may use
+    * {@link InverseIndexBuilderImpl#buildIndexKeys} beforehand to achieve this.
+    *
+    * <p>
+    * <b>example:</b>
+    * <br/>
+    * {@code
+    * doc_id = 100,
+    *   }
+    * <br/>
+    * {@code
+    * tokens = ["kam", "die", "Parodie", "An", "kam", "Alan", "die", "Smithee", "Film", "Burn", "Hollywood", "Film"],
+    *   }
+    * <br/>
+    * {@code
+    * return {
+    *     "kam" : [(100, [0, 4])],
+    *     "die" : [(100, [1, 6])],
+    *     "Parodie" : [(100, [2])],
+    *     "An" : [(100, [3])],
+    *     "Alan" : [(100, [5])],
+    *     "Smithee" : [(100, [7])],
+    *     "Film" : [(100, [8, 11])],
+    *     "Burn" : [(100, [9])],
+    *     "Hollywood" : [(100, [10])],
+    *   }
     * }
+    * <p/>
     *
-    * Beispiel:
-    *
-    * Input:
-    * pageId = Int(1)
-    * pageWordsAsList = List[String]("kam", "die", "Parodie", "An", "Alan", "Smithee", "Film", "Burn", "Hollywood")
-    * stepSize = Int(3)
-    *
-    * Output:
-    * collection.mutable.Map[String, List[(Int, List[Int])]
-    * {
-    * "hash("kam die Parodie")": List[ ( 1, List[ 0 ] ) ],
-    * "hash("die Parodie An")": List[ ( 1, List[ 1 ] ) ],
-    * "hash("Parodie An Alan")": List[ ( 1, List[ 2 ] ) ], ...
-    * }
-    *
-    * @param doc_id Die Page-ID.
-    * @param tokens Eine Liste, deren Elemente die Woerter der Page enthalten.
-    * @return Eine Forward Reference Table.
+    * @param doc_id The document's identifier.
+    * @param tokens The parsed and normalized words of the document.
+    * @return The inverse index for the passed document
     */
   def buildInverseIndexEntry(doc_id: Long,
                              tokens: List[String]): Map[String, (Long, List[Int])] = {
@@ -56,6 +69,13 @@ object InverseIndexBuilderImpl {
     }._1
   }
 
+  /**
+    * Merges an array of different inverse indexes to get a single index. Actually this function works like a reducer
+    * and is important when building a huge inverse index in a distributed system.
+    *
+    * @param entries The inverse indexes
+    * @return a single inverse index based on the input indexes
+    */
   def mergeInverseIndexEntries(entries: List[Map[String, (Long, List[Int])]]): Map[String, List[(Long, List[Int])]] = {
     entries.foldLeft(Map.empty[String, List[(Long, List[Int])]]) {
       (map, entryMap) => {
@@ -72,32 +92,62 @@ object InverseIndexBuilderImpl {
 
   def buildIndexKeySet(documentText: String): Set[String] = buildIndexKeys(documentText).toSet
 
+  /**
+    * Parses a given input text into a collection of words and transforms these words into tokens to build an inverse
+    * index.
+    * <p>
+    * The used parser extracts symbols and characters of the wikipedia markup language from the input text. The text
+    * will then be normalized and certain stop words will be removed. Lastly, combinations of n tokens are used to build
+    * compound token keys. (currently n = 1, meaning compound tokens are disabled)
+    * </p>
+    *
+    * @param documentText the input text that should be parsed.
+    * @return a collection of tokens already prepared to build an inverse index.
+    */
   def buildIndexKeys(documentText: String): List[String] = {
-    val tokens = WikiDumpParser.extractPlainText(documentText)
-    val normalizedTokens = normalize(tokens)
+    var tokens = WikiDumpParser.extractPlainText(documentText)
+
+    tokens = normalize(tokens)
+
+    if (stopWords == null) loadStopWords()
+    tokens = tokens.filter(x => !stopWords.contains(x))
+
+    buildSingleTokenKeys(tokens)
+  }
+
+  /**
+    * Reduces the variety of word.
+    *
+    * <p>
+    * <b>The following approaches are used so far:</b>
+    * <ul>
+    * <li>to lower case</li>
+    * </ul>
+    *
+    * <b>Not implemented:</b>
+    * <ul>
+    * <li>stemming</il>
+    * <li>synonyms</il>
+    * </ul>
+    * </p>
+    *
+    * @param rawWords words that are not yet normalized
+    * @return normalized tokens
+    */
+  def normalize(rawWords: List[String]): List[String] = {
+    rawWords.map(x => x.toLowerCase(Locale.ROOT))
 
     /**
-      * - filter stop words
+      * ToDo:
       * - apply stemming: only store root versions of words
       * - merge synonyms of words to one term
       *
       * The latter could really influence our similarity results in a bad way. We should take care that this is not
-      * going in the wrong direction and suddenly everything becomes plagiarism.
+      * going in the wrong direction and suddenly everything becomes a plagiarism.
       *
       * For more information on how to build an inverse index, look up the elastic search doc.
       * see: https://www.elastic.co/guide/en/elasticsearch/guide/current/inverted-index.html
       */
-    buildSingleTokenKeys(normalizedTokens)
-  }
-
-  def normalize(rawWords: List[String]): List[String] = {
-    var reducedWords = rawWords.map(x => x.toLowerCase(Locale.ROOT))
-
-    if (stopWords == null) loadStopWords()
-
-    reducedWords = reducedWords.filter(x => !stopWords.contains(x))
-
-    reducedWords
   }
 
   private def buildSingleTokenKeys(uniqueTokens: List[String]): List[String] = uniqueTokens
