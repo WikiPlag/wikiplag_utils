@@ -141,7 +141,7 @@ object MongoDbClient {
 	}
 
 	private def parseFromInverseIndexEntry = (token: String, documents: List[(Long, List[Int])]) => {
-			MongoDBObject(
+		MongoDBObject(
 			("_id", token),
 			("doc_list", documents)
 		)
@@ -152,7 +152,8 @@ object MongoDbClient {
 			id = x.getLong("_id", Long.MinValue),
 			text = x.getString("text", ""),
 			title = x.getString("title", ""),
-			viewIndex = x.getAsOrElse[List[(Int, Int, Int)]]("viewindex", List.empty[(Int, Int, Int)]))
+			viewIndex = x.getAsOrElse[List[(Int, Int, Int)]]("viewindex", List.empty[(Int, Int, Int)])
+		)
 	}
 
 	private def parse2InvIndexEntry(x: DBObject): (String, List[(Long, List[Int])]) = {
