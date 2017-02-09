@@ -13,7 +13,6 @@ class InverseIndexBuilderTest extends FunSuite {
 
 	trait TestObject {
 		val testObject = InverseIndexBuilderImpl
-		testObject.loadStopWords()
 	}
 
 	test("testEmptyList") {

@@ -18,7 +18,7 @@ object InverseIndexBuilderImpl {
 	  *
 	  * @param stopWordsFile the file name.
 	  */
-	def loadStopWords(stopWordsFile: String = "/stopwords_de.txt") = {
+	private def loadStopWords(stopWordsFile: String = "/stopwords_de.txt") = {
 		Option(getClass.getResourceAsStream(stopWordsFile))
 				.map(scala.io.Source.fromInputStream)
 				.map(_.getLines.toSet)

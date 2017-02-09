@@ -18,7 +18,7 @@ class MongoDbClientTest extends FunSuite with BeforeAndAfterAll {
 			null,
 			config.getString("mongo.host"),
 			config.getInt("mongo.port"),
-			config.getString("mongo.db"),
+			config.getString("mongo.database"),
 			config.getString("mongo.user"),
 			config.getString("mongo.password")
 		)

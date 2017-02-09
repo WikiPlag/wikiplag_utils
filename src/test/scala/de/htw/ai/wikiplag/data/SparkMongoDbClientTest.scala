@@ -12,15 +12,13 @@ class SparkMongoDbClientTest extends FunSuite with BeforeAndAfterAll {
 	var conf: SparkConf = _
 	var sc: SparkContext = _
 
-
 	override protected def beforeAll(): Unit = {
-
 		val config = ConfigFactory.load("mongo.properties")
 		mongoDbClient = MongoDbClient(
 			null,
 			config.getString("mongo.host"),
 			config.getInt("mongo.port"),
-			config.getString("mongo.db"),
+			config.getString("mongo.database"),
 			config.getString("mongo.user"),
 			config.getString("mongo.password")
 		)
